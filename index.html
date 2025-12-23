@@ -302,9 +302,9 @@
             // NEW: Milestone State
             const [activeMilestone, setActiveMilestone] = useState(null);
 
-            // NEW: State for Undo Logic with 1-minute expiration
+            // NEW: Logic for Clear, Undo, and Countdown
             const [backupData, setBackupData] = useState(null);
-            const [undoTimerId, setUndoTimerId] = useState(null);
+            const [timeLeft, setTimeLeft] = useState(0);
             
             // Default Data Structure
             const defaultForm = {
@@ -370,6 +370,18 @@
                 localStorage.setItem('habitLogs', JSON.stringify(logs));
                 localStorage.setItem('habitShields', JSON.stringify(shields));
             }, [habits, logs, shields]);
+
+            // Countdown Timer Lifecycle
+            useEffect(() => {
+                if (timeLeft <= 0) {
+                    setBackupData(null);
+                    return;
+                }
+                const timer = setInterval(() => {
+                    setTimeLeft(prev => prev - 1);
+                }, 1000);
+                return () => clearInterval(timer);
+            }, [timeLeft]);
 
             const todayStr = getISTDateString();
 
@@ -476,23 +488,13 @@
                 }
             };
 
-            // NEW: Logic for Clear and 1-Minute Undo
+            // NEW: Data Clearing and Countdown Logic
             const handleClearData = () => {
-                // Cancel existing timer if any
-                if (undoTimerId) clearTimeout(undoTimerId);
-                
                 setBackupData({ habits, logs, shields });
                 setHabits([]);
                 setLogs({});
                 setShields({});
-
-                // Set 60-second timer to expire backup
-                const timer = setTimeout(() => {
-                    setBackupData(null);
-                    setUndoTimerId(null);
-                }, 60000); 
-                
-                setUndoTimerId(timer);
+                setTimeLeft(60); // Start 60 second countdown
             };
 
             const handleUndoClear = () => {
@@ -501,8 +503,7 @@
                     setLogs(backupData.logs);
                     setShields(backupData.shields);
                     setBackupData(null);
-                    if (undoTimerId) clearTimeout(undoTimerId);
-                    setUndoTimerId(null);
+                    setTimeLeft(0);
                 }
             };
 
@@ -1050,17 +1051,17 @@
                                                 Clear All Ritual Data
                                             </button>
 
-                                            {backupData ? (
+                                            {backupData && timeLeft > 0 ? (
                                                 <div className="space-y-3 animate-fade">
                                                     <button 
                                                         onClick={handleUndoClear} 
                                                         className="w-full py-5 rounded-[24px] bg-black text-amber-400 font-black text-[11px] uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all"
                                                     >
                                                         <i className="fa-solid fa-rotate-left"></i>
-                                                        Undo Mistaken Clear
+                                                        Undo Clear ({timeLeft}s)
                                                     </button>
                                                     <p className="text-[8px] text-center text-slate-400 font-bold uppercase tracking-widest italic">
-                                                        Note: Restore option will expire in 1 minute.
+                                                        Warning: Backup will be deleted in {timeLeft} seconds.
                                                     </p>
                                                 </div>
                                             ) : (
