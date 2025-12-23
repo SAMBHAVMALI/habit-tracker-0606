@@ -302,8 +302,9 @@
             // NEW: Milestone State
             const [activeMilestone, setActiveMilestone] = useState(null);
 
-            // NEW: State for Undo Logic
+            // NEW: State for Undo Logic with 1-minute expiration
             const [backupData, setBackupData] = useState(null);
+            const [undoTimerId, setUndoTimerId] = useState(null);
             
             // Default Data Structure
             const defaultForm = {
@@ -475,12 +476,23 @@
                 }
             };
 
-            // NEW: Logic for Clear and Undo
+            // NEW: Logic for Clear and 1-Minute Undo
             const handleClearData = () => {
+                // Cancel existing timer if any
+                if (undoTimerId) clearTimeout(undoTimerId);
+                
                 setBackupData({ habits, logs, shields });
                 setHabits([]);
                 setLogs({});
                 setShields({});
+
+                // Set 60-second timer to expire backup
+                const timer = setTimeout(() => {
+                    setBackupData(null);
+                    setUndoTimerId(null);
+                }, 60000); 
+                
+                setUndoTimerId(timer);
             };
 
             const handleUndoClear = () => {
@@ -489,6 +501,8 @@
                     setLogs(backupData.logs);
                     setShields(backupData.shields);
                     setBackupData(null);
+                    if (undoTimerId) clearTimeout(undoTimerId);
+                    setUndoTimerId(null);
                 }
             };
 
@@ -1036,14 +1050,23 @@
                                                 Clear All Ritual Data
                                             </button>
 
-                                            {backupData && (
-                                                <button 
-                                                    onClick={handleUndoClear} 
-                                                    className="w-full py-5 rounded-[24px] bg-black text-amber-400 font-black text-[11px] uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all"
-                                                >
-                                                    <i className="fa-solid fa-rotate-left"></i>
-                                                    Undo Mistaken Clear
-                                                </button>
+                                            {backupData ? (
+                                                <div className="space-y-3 animate-fade">
+                                                    <button 
+                                                        onClick={handleUndoClear} 
+                                                        className="w-full py-5 rounded-[24px] bg-black text-amber-400 font-black text-[11px] uppercase tracking-widest shadow-2xl flex items-center justify-center gap-4 active:scale-95 transition-all"
+                                                    >
+                                                        <i className="fa-solid fa-rotate-left"></i>
+                                                        Undo Mistaken Clear
+                                                    </button>
+                                                    <p className="text-[8px] text-center text-slate-400 font-bold uppercase tracking-widest italic">
+                                                        Note: Restore option will expire in 1 minute.
+                                                    </p>
+                                                </div>
+                                            ) : (
+                                                <p className="text-[9px] text-center text-slate-300 font-bold uppercase tracking-widest">
+                                                    Cloud and Storage management
+                                                </p>
                                             )}
                                         </div>
                                     </div>
