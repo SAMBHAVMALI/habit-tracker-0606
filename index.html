@@ -34,6 +34,7 @@
             -webkit-tap-highlight-color: transparent;
         }
 
+        /* structural components */
         .app-shell { 
             height: 100vh; 
             display: flex; 
@@ -53,6 +54,7 @@
         }
         .content-area::-webkit-scrollbar { display: none; }
 
+        /* Splash Sequence Logic */
         .overlay-screen { 
             position: fixed; 
             inset: 0; 
@@ -88,6 +90,7 @@
             letter-spacing: 0.12em; 
         }
 
+        /* empty state containers */
         .centered-container { 
             flex: 1; 
             display: flex; 
@@ -97,6 +100,7 @@
             text-align: center; 
         }
         
+        /* calendar framework components */
         .calendar-grid { 
             display: grid; 
             grid-template-columns: repeat(7, 1fr); 
@@ -112,6 +116,7 @@
             font-weight: 800; 
         }
 
+        /* advanced scrolling systems */
         .scroll-wrapper { 
             overflow-x: auto; 
             width: 100%; 
@@ -127,6 +132,7 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
+        /* floating action button engine */
         .fixed-bottom-btn { 
             position: absolute; 
             bottom: 85px;  
@@ -138,6 +144,7 @@
             filter: drop-shadow(0 15px 15px rgba(0,0,0,0.1));
         }
 
+        /* data visualization components */
         .meter-svg { transform: rotate(-90deg); }
         .meter-bg { fill: none; stroke: #F8FAFC; stroke-width: 10; }
         .meter-progress { 
@@ -148,6 +155,7 @@
             transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1); 
         }
 
+        /* heatmap matrix engine */
         .heatmap-grid { 
             display: grid; 
             grid-template-columns: repeat(10, 1fr); 
@@ -171,6 +179,7 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
+        /* month picker logic grid */
         .month-picker-grid { 
             display: grid; 
             grid-template-columns: repeat(7, 1fr); 
@@ -219,6 +228,7 @@
             box-shadow: 0 -5px 20px rgba(0,0,0,0.02);
         }
 
+        /* --- STREAK & MILESTONE STYLES --- */
         .milestone-popup {
             position: fixed; inset: 0; z-index: 99999;
             background: rgba(0,0,0,0.85); backdrop-filter: blur(12px);
@@ -241,18 +251,18 @@
         const { useState, useEffect, useMemo, Fragment } = React;
 
         const App = () => {
-            // --- HAPTIC ENGINE HELPER ---
+            // --- HAPTIC TRIGGER ENGINE ---
             const triggerHaptic = (type = 'light') => {
                 if (!navigator.vibrate) return;
-                const patterns = {
+                const patternMap = {
                     light: 10,
                     medium: 25,
                     heavy: 50,
-                    success: [10, 30, 10],
-                    warning: [50, 50],
-                    error: [100, 50, 100]
+                    success: [15, 30, 15],
+                    warning: [40, 40],
+                    error: [80, 50, 80]
                 };
-                navigator.vibrate(patterns[type] || 10);
+                navigator.vibrate(patternMap[type] || 10);
             };
 
             // --- IST TIME HELPER ---
@@ -280,6 +290,7 @@
             const [growthRange, setGrowthRange] = useState(30); 
             const [pickers, setPickers] = useState({ color: false, icon: false });
 
+            // Persistence Management
             const [habits, setHabits] = useState(() => {
                 try {
                     const savedHabits = localStorage.getItem('habits');
@@ -294,6 +305,7 @@
                 } catch (e) { return {}; }
             });
 
+            // NEW: Streak Shield State
             const [shields, setShields] = useState(() => {
                 try {
                     const saved = localStorage.getItem('habitShields');
@@ -301,10 +313,14 @@
                 } catch (e) { return {}; }
             });
 
+            // NEW: Milestone State
             const [activeMilestone, setActiveMilestone] = useState(null);
+
+            // NEW: Logic for Clear, Undo, and Countdown
             const [backupData, setBackupData] = useState(null);
             const [timeLeft, setTimeLeft] = useState(0);
             
+            // Default Data Structure
             const defaultForm = {
                 name: '', 
                 description: '', 
@@ -320,6 +336,7 @@
 
             const [form, setForm] = useState(defaultForm);
 
+            // UI Asset Libraries
             const quotes = [
                 "Consistency is your signature.", 
                 "Discipline equals freedom.", 
@@ -351,7 +368,6 @@
             const checkMilestones = (streak, name) => {
                 const targets = [1, 7, 30, 90, 180, 365];
                 if (targets.includes(streak)) {
-                    triggerHaptic('success');
                     setActiveMilestone({ days: streak, name: name });
                 }
             };
@@ -369,6 +385,7 @@
                 localStorage.setItem('habitShields', JSON.stringify(shields));
             }, [habits, logs, shields]);
 
+            // Countdown Timer Lifecycle
             useEffect(() => {
                 if (timeLeft <= 0) {
                     setBackupData(null);
@@ -422,12 +439,9 @@
 
             // --- 5. SYSTEM HANDLERS ---
             const processHabitSave = () => {
-                if(!form.name.trim()) {
-                    triggerHaptic('warning');
-                    return;
-                }
+                if(!form.name.trim()) return;
                 
-                triggerHaptic('success');
+                triggerHaptic('success'); // Added haptic for Update Discipline / Forge Ritual
                 if (editingId) {
                     const updatedHabits = habits.map(h => h.id === editingId ? { ...form, id: editingId } : h);
                     setHabits(updatedHabits);
@@ -436,6 +450,7 @@
                     const newId = Date.now();
                     const newHabit = { ...form, id: newId };
                     setHabits([...habits, newHabit]);
+                    // Initialize shield
                     setShields(prev => ({ ...prev, [newId]: { available: true } }));
                 }
                 
@@ -448,14 +463,16 @@
                 const currentDayList = logs[todayStr] || [];
                 let newList;
                 if (currentDayList.includes(id)) {
-                    triggerHaptic('light');
+                    triggerHaptic('light'); // Soft haptic for unticking
                     newList = currentDayList.filter(item => item !== id);
                 } else {
-                    triggerHaptic('medium');
+                    triggerHaptic('success'); // Success double-pulse for habit tick
                     newList = [...currentDayList, id];
+                    // Logic: Calculate streak post-action and check milestones
                     const currentStreak = getStreak(id);
                     checkMilestones(currentStreak + 1, name);
 
+                    // Shield Recharge Logic: If completed 3 days in a row (today, yesterday, day before)
                     const d1 = getPrevDate(todayStr);
                     const d2 = getPrevDate(d1);
                     if ((logs[d1] || []).includes(id) && (logs[d2] || []).includes(id)) {
@@ -467,7 +484,7 @@
 
             const useShield = (id) => {
                 if (!shields[id]?.available) return;
-                triggerHaptic('heavy');
+                triggerHaptic('heavy'); // Heavy haptic for shield activation
                 const yesterday = getPrevDate(todayStr);
                 const yList = logs[yesterday] || [];
                 if (!yList.includes(id)) {
@@ -477,14 +494,14 @@
             };
 
             const triggerEditMode = (habit) => {
-                triggerHaptic('light');
+                triggerHaptic('light'); // Added haptic for Edit
                 setForm(habit);
                 setEditingId(habit.id);
                 setCurrentPage('add');
             };
 
             const triggerDelete = (id) => {
-                triggerHaptic('warning');
+                triggerHaptic('warning'); // Added haptic for Delete click
                 if(confirm("Confirm: Are you sure you want to delete this ritual? This cannot be undone.")) {
                     triggerHaptic('medium');
                     const remainingHabits = habits.filter(h => h.id !== id);
@@ -492,18 +509,19 @@
                 }
             };
 
+            // NEW: Data Clearing and Countdown Logic
             const handleClearData = () => {
-                triggerHaptic('heavy');
+                triggerHaptic('heavy'); // Added haptic for Clear All
                 setBackupData({ habits, logs, shields });
                 setHabits([]);
                 setLogs({});
                 setShields({});
-                setTimeLeft(60); 
+                setTimeLeft(60); // Start 60 second countdown
             };
 
             const handleUndoClear = () => {
                 if (backupData) {
-                    triggerHaptic('success');
+                    triggerHaptic('success'); // Added haptic for Undo
                     setHabits(backupData.habits);
                     setLogs(backupData.logs);
                     setShields(backupData.shields);
@@ -522,13 +540,13 @@
                         </div>
                         <div className="flex gap-4 relative">
                             <button 
-                                onClick={() => { triggerHaptic('light'); setCurrentPage('calendar_full'); }} 
+                                onClick={() => { triggerHaptic('medium'); setCurrentPage('calendar_full'); }} 
                                 className="w-12 h-12 flex items-center justify-center rounded-2xl bg-white border border-black/5 text-black shadow-sm active:scale-90 transition-all duration-300"
                             >
                                 <i className="fa-solid fa-calendar-day"></i>
                             </button>
                             <button 
-                                onClick={() => { triggerHaptic('light'); setCurrentPage('settings'); }} 
+                                onClick={() => { triggerHaptic('medium'); setCurrentPage('settings'); }} 
                                 className="w-12 h-12 flex items-center justify-center rounded-2xl bg-black text-white shadow-xl active:scale-90 transition-all duration-300"
                             >
                                 <i className="fa-solid fa-gear text-[--logo-gold]"></i>
@@ -542,6 +560,7 @@
             return (
                 <div className="app-shell max-w-lg mx-auto">
                     
+                    {/* NEW: MILESTONE POPUP COMPONENT */}
                     {activeMilestone && (
                         <div className="milestone-popup">
                             <div className="milestone-card shadow-2xl">
@@ -553,6 +572,7 @@
                         </div>
                     )}
 
+                    {/* SYSTEM OVERLAY / SPLASH */}
                     <div className={`overlay-screen ${overlayStage === 'none' ? 'hide-overlay' : ''}`}>
                         <div className="flex flex-col items-center animate-fade text-center px-10">
                             {overlayStage === 'logo' ? (
@@ -807,14 +827,14 @@
                                     <div className="flex-1 flex flex-col gap-3 min-w-0">
                                         <p className="text-[9px] font-black uppercase tracking-[0.2em] ml-4 text-slate-400">Color</p>
                                         <div className="flex items-center overflow-hidden">
-                                            <button onClick={() => { triggerHaptic('light'); setPickers({color: !pickers.color, icon: false}); }} className="w-10 h-10 rounded-full border-4 border-white shadow-xl shrink-0 z-10" style={{ backgroundColor: form.color }} />
+                                            <button onClick={() => setPickers({color: !pickers.color, icon: false})} className="w-10 h-10 rounded-full border-4 border-white shadow-xl shrink-0 z-10" style={{ backgroundColor: form.color }} />
                                             {pickers.color && (
                                                 <div className="scroll-wrapper no-scrollbar ml-2 bg-white/40 p-1 rounded-full animate-fade">
                                                     <div className="scroll-inner px-2 gap-2">
                                                         {colorPalette.map(colorCode => (
                                                             <button 
                                                                 key={colorCode} 
-                                                                onClick={() => { triggerHaptic('light'); setForm({...form, color: colorCode}); setPickers({color: false}); }} 
+                                                                onClick={() => {setForm({...form, color: colorCode}); setPickers({color: false})}} 
                                                                 className="w-7 h-7 rounded-full shrink-0 shadow-md" 
                                                                 style={{ backgroundColor: colorCode }} 
                                                             />
@@ -830,7 +850,7 @@
                                         <p className="text-[9px] font-black uppercase tracking-[0.2em] ml-4 text-slate-400">Symbol</p>
                                         <div className="flex items-center overflow-hidden">
                                             <button 
-                                                onClick={() => { triggerHaptic('light'); setPickers({icon: !pickers.icon, color: false}); }} 
+                                                onClick={() => setPickers({icon: !pickers.icon, color: false})} 
                                                 className="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-xl shadow-xl z-10 border border-black/5 shrink-0 text-black"
                                             >
                                                 {form.icon}
@@ -841,7 +861,7 @@
                                                         {iconLibrary.map(sym => (
                                                             <button 
                                                                 key={sym} 
-                                                                onClick={() => { triggerHaptic('light'); setForm({...form, icon: sym}); setPickers({icon: false}); }} 
+                                                                onClick={() => {setForm({...form, icon: sym}); setPickers({icon: false})}} 
                                                                 className="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-sm shrink-0 border border-black/5"
                                                             >
                                                                 {sym}
@@ -890,7 +910,6 @@
                                                 <button 
                                                     key={day} 
                                                     onClick={() => {
-                                                        triggerHaptic('light');
                                                         const current = isSelected ? form.weekDays.filter(d => d !== day) : [...form.weekDays, day];
                                                         setForm({...form, weekDays: current});
                                                     }} 
@@ -912,7 +931,6 @@
                                                 <button 
                                                     key={dNum} 
                                                     onClick={() => {
-                                                        triggerHaptic('light');
                                                         const current = isSel ? form.monthDays.filter(d => d !== dNum) : [...form.monthDays, dNum];
                                                         setForm({...form, monthDays: current});
                                                     }} 
@@ -975,8 +993,8 @@
                                         <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">{viewDate.getFullYear()}</p>
                                     </div>
                                     <div className="flex gap-3">
-                                        <button onClick={() => { triggerHaptic('light'); setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1)); }} className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-black/5 text-black hover:bg-slate-50 transition-all"><i className="fa-solid fa-chevron-left"></i></button>
-                                        <button onClick={() => { triggerHaptic('light'); setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1)); }} className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-black/5 text-black hover:bg-slate-50 transition-all"><i className="fa-solid fa-chevron-right"></i></button>
+                                        <button onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))} className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-black/5 text-black hover:bg-slate-50 transition-all"><i className="fa-solid fa-chevron-left"></i></button>
+                                        <button onClick={() => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 1))} className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-black/5 text-black hover:bg-slate-50 transition-all"><i className="fa-solid fa-chevron-right"></i></button>
                                     </div>
                                 </div>
                                 <div className="bg-white p-8 rounded-[48px] border border-black/5 shadow-2xl mb-24">
@@ -1091,25 +1109,25 @@
 
                     {/* PERMANENT NAV ENGINE */}
                     <nav className="rout-nav">
-                        <button onClick={() => { triggerHaptic('light'); setEditingId(null); setForm(defaultForm); setCurrentPage('home'); }} className={`flex flex-col items-center w-14 transition-all duration-300 ${currentPage === 'home' ? 'text-black scale-110' : 'text-slate-300'}`}>
+                        <button onClick={() => { triggerHaptic('medium'); setEditingId(null); setForm(defaultForm); setCurrentPage('home'); }} className={`flex flex-col items-center w-14 transition-all duration-300 ${currentPage === 'home' ? 'text-black scale-110' : 'text-slate-300'}`}>
                             <i className="fa-solid fa-house-chimney text-xl"></i>
                             <span className="nav-text">Home</span>
                         </button>
-                        <button onClick={() => { triggerHaptic('light'); setEditingId(null); setForm(defaultForm); setCurrentPage('habits'); }} className={`flex flex-col items-center w-14 transition-all duration-300 ${currentPage === 'habits' ? 'text-black scale-110' : 'text-slate-300'}`}>
+                        <button onClick={() => { triggerHaptic('medium'); setEditingId(null); setForm(defaultForm); setCurrentPage('habits'); }} className={`flex flex-col items-center w-14 transition-all duration-300 ${currentPage === 'habits' ? 'text-black scale-110' : 'text-slate-300'}`}>
                             <i className="fa-solid fa-dna text-xl"></i>
                             <span className="nav-text">Rituals</span>
                         </button>
                         <button 
-                            onClick={() => { triggerHaptic('medium'); setForm(defaultForm); setEditingId(null); setCurrentPage('add'); }} 
+                            onClick={() => { triggerHaptic('heavy'); setForm(defaultForm); setEditingId(null); setCurrentPage('add'); }} 
                             className="w-16 h-16 logo-gradient rounded-[28px] flex items-center justify-center text-white -mt-20 border-8 border-white shadow-2xl active:scale-90 transition-all duration-500 hover:rotate-90"
                         >
                             <i className="fa-solid fa-plus text-2xl text-amber-400"></i>
                         </button>
-                        <button onClick={() => { triggerHaptic('light'); setEditingId(null); setCurrentPage('growth'); }} className={`flex flex-col items-center w-14 transition-all duration-300 ${currentPage === 'growth' ? 'text-black scale-110' : 'text-slate-300'}`}>
+                        <button onClick={() => { triggerHaptic('medium'); setEditingId(null); setCurrentPage('growth'); }} className={`flex flex-col items-center w-14 transition-all duration-300 ${currentPage === 'growth' ? 'text-black scale-110' : 'text-slate-300'}`}>
                             <i className="fa-solid fa-chart-pie text-xl"></i>
                             <span className="nav-text">Growth</span>
                         </button>
-                        <button onClick={() => { triggerHaptic('light'); setEditingId(null); setCurrentPage('coach'); }} className={`flex flex-col items-center w-14 transition-all duration-300 ${currentPage === 'coach' ? 'text-black scale-110' : 'text-slate-300'}`}>
+                        <button onClick={() => { triggerHaptic('medium'); setEditingId(null); setCurrentPage('coach'); }} className={`flex flex-col items-center w-14 transition-all duration-300 ${currentPage === 'coach' ? 'text-black scale-110' : 'text-slate-300'}`}>
                             <i className="fa-solid fa-wand-magic-sparkles text-xl"></i>
                             <span className="nav-text">Coach</span>
                         </button>
